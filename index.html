@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard · Confirmaciones</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090c;--s1:#0d1117;--border:#1b2530;--b2:#233040;
+  --green:#22d97a;--red:#f04f4f;--yellow:#f5c842;--blue:#4a9eff;--orange:#ff8c42;
+  --text:#dce4ef;--muted:#4e6070;--dim:#1a2530;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(rgba(255,255,255,.025) 1px,transparent 1px);background-size:30px 30px;pointer-events:none;}
+.page{position:relative;z-index:1;padding:24px 32px 40px;max-width:1600px;margin:0 auto;}
+
+/* HEADER */
+.hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--border);}
+.brand-eye{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--green);letter-spacing:.2em;text-transform:uppercase;margin-bottom:4px;}
+h1{font-family:'Barlow Condensed',sans-serif;font-size:2.4rem;font-weight:700;letter-spacing:.04em;line-height:1;}
+.hdr-right{display:flex;align-items:center;gap:14px;}
+.clock-box{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:10px 16px;text-align:center;}
+.clock-t{font-family:'JetBrains Mono',monospace;font-size:1.3rem;font-weight:600;display:block;letter-spacing:.04em;}
+.clock-d{font-family:'JetBrains Mono',monospace;font-size:.56rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:2px;}
+
+/* STATUS BAR */
+.status-bar{display:flex;align-items:center;justify-content:space-between;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:10px 18px;margin-bottom:20px;gap:16px;flex-wrap:wrap;}
+.status-left{display:flex;align-items:center;gap:10px;}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.status-dot.ok{background:var(--green);animation:pulseG 2s infinite;}
+.status-dot.err{background:var(--red);}
+.status-dot.loading{background:var(--yellow);animation:pulseY 1s infinite;}
+@keyframes pulseG{0%,100%{box-shadow:0 0 0 0 rgba(34,217,122,.4)}50%{box-shadow:0 0 0 5px rgba(34,217,122,0)}}
+@keyframes pulseY{0%,100%{opacity:1}50%{opacity:.4}}
+.status-txt{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted);letter-spacing:.06em;}
+.status-txt strong{color:var(--text);}
+.status-right{display:flex;align-items:center;gap:10px;}
+.btn-refresh{font-family:'JetBrains Mono',monospace;font-size:.65rem;padding:6px 14px;border-radius:7px;border:1px solid var(--b2);background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;letter-spacing:.06em;display:flex;align-items:center;gap:6px;}
+.btn-refresh:hover{border-color:var(--green);color:var(--green);}
+.btn-refresh.spinning .ref-icon{animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.last-update{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);letter-spacing:.06em;}
+
+/* MES SELECTOR */
+.mes-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.mes-label{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;}
+.mes-btn{font-family:'JetBrains Mono',monospace;font-size:.72rem;padding:8px 18px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;letter-spacing:.06em;text-transform:uppercase;}
+.mes-btn:hover{border-color:var(--b2);color:var(--text);}
+.mes-btn.active{background:rgba(34,217,122,.1);border-color:rgba(34,217,122,.35);color:var(--green);}
+.mes-btn.all.active{background:rgba(74,158,255,.1);border-color:rgba(74,158,255,.35);color:var(--blue);}
+
+/* KPI STRIP */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px;}
+.kpi{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden;}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi.k-white::after{background:var(--text);}
+.kpi.k-green::after{background:var(--green);}
+.kpi.k-yellow::after{background:var(--yellow);}
+.kpi.k-red::after{background:var(--red);}
+.kpi.k-blue::after{background:var(--blue);}
+.kpi-lbl{font-family:'JetBrains Mono',monospace;font-size:.57rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;}
+.kpi-val{font-family:'Barlow Condensed',sans-serif;font-size:2.8rem;font-weight:700;line-height:1;letter-spacing:.02em;}
+.kpi.k-white .kpi-val{color:var(--text);}
+.kpi.k-green .kpi-val{color:var(--green);}
+.kpi.k-yellow .kpi-val{color:var(--yellow);}
+.kpi.k-red .kpi-val{color:var(--red);}
+.kpi.k-blue .kpi-val{color:var(--blue);}
+.kpi-sub{font-size:.67rem;color:var(--muted);margin-top:5px;}
+
+/* ALERT */
+.alert{border-radius:12px;padding:18px 26px;margin-bottom:20px;display:flex;align-items:center;gap:18px;transition:all .4s;}
+.alert.ok{background:rgba(34,217,122,.06);border:1px solid rgba(34,217,122,.2);}
+.alert.warn{background:rgba(245,200,66,.06);border:1px solid rgba(245,200,66,.25);animation:warnP 3s infinite;}
+.alert.bad{background:rgba(240,79,79,.07);border:1px solid rgba(240,79,79,.3);animation:badP 2s infinite;}
+.alert.done{background:rgba(34,217,122,.1);border:1px solid rgba(34,217,122,.4);}
+.alert.idle{background:rgba(255,255,255,.02);border:1px solid var(--border);}
+@keyframes warnP{0%,100%{border-color:rgba(245,200,66,.25)}50%{border-color:rgba(245,200,66,.5)}}
+@keyframes badP{0%,100%{border-color:rgba(240,79,79,.3)}50%{border-color:rgba(240,79,79,.6)}}
+.alert-ico{font-size:2rem;flex-shrink:0;}
+.alert-body{flex:1;}
+.alert-main{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:600;letter-spacing:.04em;line-height:1.1;}
+.alert.ok .alert-main{color:var(--green);}
+.alert.warn .alert-main{color:var(--yellow);}
+.alert.bad .alert-main{color:var(--red);}
+.alert.done .alert-main{color:var(--green);}
+.alert.idle .alert-main{color:var(--muted);}
+.alert-sub{font-size:.75rem;color:var(--muted);margin-top:4px;}
+.alert-num{font-family:'Barlow Condensed',sans-serif;font-size:3.5rem;font-weight:700;line-height:1;text-align:center;min-width:90px;}
+.alert.ok .alert-num{color:var(--green);}
+.alert.warn .alert-num{color:var(--yellow);}
+.alert.bad .alert-num{color:var(--red);}
+.alert.done .alert-num{color:var(--green);}
+.alert-num-lbl{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--muted);text-align:center;letter-spacing:.1em;text-transform:uppercase;margin-top:2px;}
+
+/* PROGRESS */
+.prog-card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:24px 28px;margin-bottom:20px;}
+.prog-hdr{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px;}
+.prog-title{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);}
+.prog-nums{display:flex;align-items:baseline;gap:8px;}
+.pn-cur{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:700;color:var(--green);line-height:1;}
+.pn-sep{color:var(--muted);font-size:1rem;}
+.pn-tot{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:400;color:var(--muted);line-height:1;}
+.pct-chip{font-family:'JetBrains Mono',monospace;font-size:.78rem;padding:4px 12px;border-radius:7px;border:1px solid rgba(34,217,122,.25);color:var(--green);background:rgba(34,217,122,.06);}
+.track{position:relative;height:24px;background:var(--dim);border-radius:6px;overflow:visible;margin-bottom:8px;}
+.track-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#16a358,var(--green));transition:width 1s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden;}
+.track-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);animation:shim 2.5s infinite;}
+@keyframes shim{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
+.marker{position:absolute;top:-5px;bottom:-5px;width:2px;background:var(--yellow);left:87%;}
+.marker::before{content:'META 87%';position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:.52rem;color:var(--yellow);white-space:nowrap;letter-spacing:.08em;}
+.track-labels{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--muted);letter-spacing:.06em;padding:0 2px;}
+
+/* CHART */
+.chart-card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:26px 26px 18px;margin-bottom:20px;}
+.chart-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.chart-title{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);}
+.legend{display:flex;gap:16px;}
+.leg{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;}
+.leg-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+.leg-dot.g{background:var(--green);}
+.leg-dot.y{background:var(--yellow);}
+.leg-dot.r{background:var(--red);}
+.chart-wrap{display:flex;gap:10px;align-items:stretch;}
+.y-ax{display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;padding-bottom:26px;min-width:40px;flex-shrink:0;}
+.y-lbl{font-family:'JetBrains Mono',monospace;font-size:.55rem;color:var(--muted);}
+.bars-outer{flex:1;display:flex;flex-direction:column;}
+.bars-cont{flex:1;display:flex;align-items:flex-end;gap:4px;position:relative;height:300px;overflow:hidden;}
+.glines{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none;}
+.gl{width:100%;height:1px;background:var(--border);}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;min-width:0;}
+.bar-col:hover .bstack{opacity:.8;}
+.bar-col.today .x-lbl{color:var(--blue);}
+.bar-col.today .bstack{outline:1px solid rgba(74,158,255,.3);border-radius:4px 4px 0 0;}
+.bstack{width:100%;display:flex;flex-direction:column-reverse;border-radius:4px 4px 0 0;overflow:hidden;}
+.bseg{width:100%;}
+.bseg.g{background:var(--green);}
+.bseg.r{background:var(--red);}
+.bseg.y{background:var(--yellow);}
+.x-lbl{font-family:'JetBrains Mono',monospace;font-size:.48rem;color:var(--muted);margin-top:5px;white-space:nowrap;letter-spacing:.03em;}
+.chart-empty{height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);font-size:.82rem;gap:8px;}
+.chart-empty-ico{font-size:2.5rem;opacity:.3;}
+
+/* TABLE */
+.tbl-card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:22px 26px;}
+.tbl-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.tbl-title{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);}
+.tw{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead tr{border-bottom:1px solid var(--b2);}
+th{font-family:'JetBrains Mono',monospace;font-size:.56rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;padding:8px 12px;text-align:right;font-weight:500;}
+th:first-child{text-align:left;}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s;}
+tbody tr:hover{background:rgba(255,255,255,.02);}
+tbody tr:last-child{border-bottom:none;}
+td{padding:9px 12px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted);}
+td:first-child{text-align:left;color:var(--text);font-weight:500;}
+.gv{color:var(--green)!important;}
+.yv{color:var(--yellow)!important;}
+.rv{color:var(--red)!important;}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.63rem;font-weight:600;}
+.badge.good{background:rgba(34,217,122,.12);color:var(--green);}
+.badge.warn{background:rgba(245,200,66,.1);color:var(--yellow);}
+.badge.bad{background:rgba(240,79,79,.1);color:var(--red);}
+
+/* SHEETS CONFIG (al final) */
+.config-card{background:var(--s1);border:2px dashed var(--b2);border-radius:14px;padding:32px 36px;margin-top:24px;}
+.config-title{font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:.04em;margin-bottom:4px;}
+.config-sub{font-size:.78rem;color:var(--muted);margin-bottom:22px;line-height:1.6;}
+.config-sub span{color:var(--green);}
+.config-input-row{display:flex;gap:10px;align-items:stretch;}
+.config-input{flex:1;background:var(--bg);border:1px solid var(--b2);border-radius:9px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.8rem;padding:12px 16px;outline:none;transition:border-color .2s;}
+.config-input:focus{border-color:rgba(34,217,122,.4);}
+.config-input::placeholder{color:var(--muted);}
+.btn-connect{background:var(--green);color:#000;border:none;border-radius:9px;padding:12px 24px;font-family:'Barlow',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;white-space:nowrap;transition:opacity .2s;}
+.btn-connect:hover{opacity:.85;}
+.config-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px;}
+.step{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.step-num{font-family:'Barlow Condensed',sans-serif;font-size:1.8rem;font-weight:700;color:var(--green);opacity:.4;line-height:1;margin-bottom:6px;}
+.step-txt{font-size:.72rem;color:var(--muted);line-height:1.6;}
+.step-txt strong{color:var(--text);}
+.step-txt code{font-family:'JetBrains Mono',monospace;font-size:.65rem;background:rgba(255,255,255,.06);padding:1px 5px;border-radius:3px;color:var(--green);}
+
+/* TOOLTIP */
+.tt{position:fixed;background:#0a1018;border:1px solid var(--b2);border-radius:10px;padding:12px 16px;pointer-events:none;z-index:999;display:none;min-width:180px;box-shadow:0 8px 32px rgba(0,0,0,.7);}
+.tt.vis{display:block;}
+.tt-date{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px;padding-bottom:7px;border-bottom:1px solid var(--border);}
+.tt-row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:4px;}
+.tt-lbl{display:flex;align-items:center;gap:5px;font-size:.7rem;color:var(--muted);}
+.tt-d{width:7px;height:7px;border-radius:2px;flex-shrink:0;}
+.tt-v{font-family:'JetBrains Mono',monospace;font-size:.78rem;font-weight:600;}
+.tt-sep{border-top:1px solid var(--border);margin:7px 0 6px;}
+.tt-tot{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:.7rem;}
+.tt-pct{text-align:right;font-family:'JetBrains Mono',monospace;font-size:.68rem;margin-top:4px;}
+
+/* TABS */
+.tabs-nav{display:flex;gap:0;margin-bottom:22px;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:5px;width:fit-content;}
+.tab-btn{font-family:'JetBrains Mono',monospace;font-size:.7rem;padding:9px 24px;border-radius:8px;border:none;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{background:var(--bg);color:var(--text);border:1px solid var(--border);}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+
+/* NIVEL DE SERVICIO */
+.ns-filter{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.ns-lbl{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;}
+.date-in{background:var(--s1);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.7rem;padding:7px 12px;outline:none;transition:border-color .2s;}
+.date-in:focus{border-color:rgba(34,217,122,.4);}
+.btn-preset{font-family:'JetBrains Mono',monospace;font-size:.63rem;padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;}
+.btn-preset:hover{border-color:rgba(34,217,122,.3);color:var(--green);}
+.btn-apply{font-family:'JetBrains Mono',monospace;font-size:.63rem;padding:7px 14px;border-radius:8px;border:1px solid rgba(34,217,122,.3);background:rgba(34,217,122,.06);color:var(--green);cursor:pointer;}
+.ns-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.ns-chart-card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:26px 26px 18px;margin-bottom:20px;overflow-x:auto;}
+.ns-tbl-card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:22px 26px;}
+.ns-bar-wrap{display:flex;align-items:flex-end;gap:2px;width:100%;}
+.ns-bar{border-radius:3px 3px 0 0;flex:1;transition:height .6s ease;}
+.ns-bar.g{background:var(--green);}
+.ns-bar.r{background:var(--red);}
+
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div>
+      <div class="brand-eye">▸ Sistema de Confirmaciones · La Ka Distribuidora</div>
+      <h1>DASHBOARD DE ÓRDENES</h1>
+    </div>
+    <div class="hdr-right">
+      <div class="clock-box">
+        <span class="clock-t" id="clk">--:--</span>
+        <div class="clock-d" id="clk-d">---</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <div class="status-left">
+      <div class="status-dot loading" id="s-dot"></div>
+      <div class="status-txt" id="s-txt">Esperando conexión a Google Sheets…</div>
+    </div>
+    <div class="status-right">
+      <div class="last-update" id="last-update"></div>
+      <button class="btn-refresh" id="btn-refresh" onclick="loadData()" title="Actualizar datos">
+        <span class="ref-icon">↻</span> Actualizar
+      </button>
+    </div>
+  </div>
+
+
+  <!-- TABS -->
+  <div class="tabs-nav">
+    <button class="tab-btn active" id="tbtn-resultados" onclick="switchTab('resultados',this)">📦 Resultados</button>
+    <button class="tab-btn" id="tbtn-ns" onclick="switchTab('ns',this)">📈 Nivel de Servicio</button>
+  </div>
+
+  <!-- TAB RESULTADOS -->
+  <div class="tab-pane active" id="tab-resultados">
+
+  <!-- MES SELECTOR -->
+  <div class="mes-bar" id="mes-bar">
+    <span class="mes-label">Filtrar por mes:</span>
+    <button class="mes-btn all active" onclick="setMes('TODOS')">Todos</button>
+  </div>
+
+  <!-- KPI -->
+  <div class="kpis">
+    <div class="kpi k-white"><div class="kpi-lbl">Total órdenes</div><div class="kpi-val" id="k-total">—</div><div class="kpi-sub" id="k-total-sub">Sin datos</div></div>
+    <div class="kpi k-green"><div class="kpi-lbl">Confirmadas</div><div class="kpi-val" id="k-conf">—</div><div class="kpi-sub" id="k-conf-s">Anulada · Remisionada</div></div>
+    <div class="kpi k-yellow"><div class="kpi-lbl">Vigentes</div><div class="kpi-val" id="k-vig">—</div><div class="kpi-sub" id="k-vig-s">Vigente · Pendiente</div></div>
+    <div class="kpi k-red"><div class="kpi-lbl">Anuladas</div><div class="kpi-val" id="k-anul">—</div><div class="kpi-sub" id="k-anul-s">Anulada · Pendiente</div></div>
+    <div class="kpi k-blue"><div class="kpi-lbl">Tasa de confirmación</div><div class="kpi-val" id="k-tasa">—</div><div class="kpi-sub">Meta: 87%</div></div>
+  </div>
+
+  <!-- ALERT -->
+  <div class="alert idle" id="alert">
+    <div class="alert-ico" id="a-ico">📡</div>
+    <div class="alert-body">
+      <div class="alert-main" id="a-main">Conecta tu Google Sheets para ver el avance</div>
+      <div class="alert-sub" id="a-sub">Ingresa el link de tu hoja en la sección de configuración al final de la página</div>
+    </div>
+    <div>
+      <div class="alert-num" id="a-num">—</div>
+      <div class="alert-num-lbl" id="a-lbl">FALTAN</div>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="prog-card">
+    <div class="prog-hdr">
+      <div class="prog-title">Avance hacia meta 87%</div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div class="prog-nums">
+          <span class="pn-cur" id="p-cur">0</span>
+          <span class="pn-sep">/</span>
+          <span class="pn-tot" id="p-tot">0</span>
+        </div>
+        <div class="pct-chip" id="p-pct">0%</div>
+      </div>
+    </div>
+    <div class="track">
+      <div class="track-fill" id="t-fill" style="width:0%"></div>
+      <div class="marker"></div>
+    </div>
+    <div class="track-labels">
+      <span>0</span>
+      <span id="t-mid">Meta 87%</span>
+      <span id="t-tot">0</span>
+    </div>
+  </div>
+
+  <!-- CHART -->
+  <div class="chart-card">
+    <div class="chart-hdr">
+      <div class="chart-title" id="chart-title">Órdenes por día</div>
+      <div class="legend">
+        <div class="leg"><div class="leg-dot g"></div>Confirmadas</div>
+        <div class="leg"><div class="leg-dot y"></div>Vigentes</div>
+        <div class="leg"><div class="leg-dot r"></div>Anuladas</div>
+      </div>
+    </div>
+    <div class="chart-wrap" id="chart-wrap">
+      <div class="chart-empty" style="width:100%;">
+        <div class="chart-empty-ico">📊</div>
+        <div>Conecta Google Sheets para ver la gráfica</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="tbl-card">
+    <div class="tbl-hdr">
+      <div class="tbl-title" id="tbl-title">Detalle por día</div>
+    </div>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Total</th>
+            <th style="color:var(--green)">Confirmadas</th>
+            <th style="color:var(--yellow)">Vigentes</th>
+            <th style="color:var(--red)">Anuladas</th>
+            <th>% Conf.</th>
+            <th style="color:var(--orange)">Faltan</th>
+          </tr>
+        </thead>
+        <tbody id="tbl-body">
+          <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted);">Sin datos</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  </div><!-- fin tab-resultados -->
+
+  <!-- TAB NIVEL DE SERVICIO -->
+  <div class="tab-pane" id="tab-ns">
+
+    <!-- KPIs NS -->
+    <div class="ns-kpis">
+      <div class="kpi k-green"><div class="kpi-lbl">Confirmadas (período)</div><div class="kpi-val" id="ns-conf">—</div><div class="kpi-sub">Por fecha de anulación</div></div>
+      <div class="kpi k-red"><div class="kpi-lbl">Anuladas (período)</div><div class="kpi-val" id="ns-anul">—</div><div class="kpi-sub">Por fecha de anulación</div></div>
+      <div class="kpi k-blue"><div class="kpi-lbl">Promedio diario conf.</div><div class="kpi-val" id="ns-prom">—</div><div class="kpi-sub">Confirmadas ÷ días activos</div></div>
+      <div class="kpi k-yellow"><div class="kpi-lbl">Mejor día</div><div class="kpi-val" id="ns-best">—</div><div class="kpi-sub" id="ns-best-s">—</div></div>
+    </div>
+
+    <!-- Filtro de fechas -->
+    <div class="ns-filter">
+      <span class="ns-lbl">Rango:</span>
+      <input type="date" class="date-in" id="ns-desde">
+      <span style="color:var(--muted);font-size:.8rem;">→</span>
+      <input type="date" class="date-in" id="ns-hasta">
+      <button class="btn-apply" onclick="renderNS()">Aplicar</button>
+      <button class="btn-preset" onclick="nsPreset(7)">7 días</button>
+      <button class="btn-preset" onclick="nsPreset(15)">15 días</button>
+      <button class="btn-preset" onclick="nsPreset(30)">30 días</button>
+      <button class="btn-preset" onclick="nsPreset(0)">Todo</button>
+    </div>
+
+    <!-- Gráfica NS -->
+    <div class="ns-chart-card">
+      <div class="chart-hdr">
+        <div class="chart-title">Confirmadas y Anuladas por día — Fecha de gestión</div>
+        <div class="legend">
+          <div class="leg"><div class="leg-dot g"></div>Confirmadas</div>
+          <div class="leg"><div class="leg-dot r"></div>Anuladas</div>
+        </div>
+      </div>
+      <div id="ns-chart-wrap">
+        <div class="chart-empty" style="width:100%;"><div class="chart-empty-ico">📈</div><div>Carga datos para ver el nivel de servicio</div></div>
+      </div>
+    </div>
+
+    <!-- Tabla NS -->
+    <div class="ns-tbl-card">
+      <div class="tbl-hdr"><div class="tbl-title">Detalle por día — Nivel de servicio</div></div>
+      <div class="tw">
+        <table>
+          <thead><tr>
+            <th>Fecha</th>
+            <th style="color:var(--green)">Confirmadas</th>
+            <th style="color:var(--red)">Anuladas</th>
+            <th>Total gestionado</th>
+            <th>% Confirmación</th>
+          </tr></thead>
+          <tbody id="ns-tbl-body">
+            <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted);">Sin datos</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- fin tab-ns -->
+
+  <!-- CONFIG GOOGLE SHEETS -->
+  <div class="config-card">
+    <div class="config-title">🔗 Conectar Google Sheets</div>
+    <div class="config-sub">
+      Pega aquí el link de tu Google Sheets. La hoja debe estar publicada como CSV.<br>
+      Cada vez que actualices la hoja, todos ven los datos nuevos al hacer clic en <span>Actualizar</span>.
+    </div>
+    <div class="config-input-row">
+      <input type="text" class="config-input" id="sheets-url" placeholder="Pega aquí el link de exportación CSV de tu Google Sheets…">
+      <button class="btn-connect" onclick="connectSheets()">Conectar</button>
+    </div>
+
+    <div class="config-steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-txt">
+          Abre tu Google Sheets. Ve a <strong>Archivo → Compartir → Publicar en la web</strong>.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-txt">
+          En "Publicar contenido y configuración", selecciona la hoja y el formato <code>Valores separados por comas (.csv)</code>. Clic en <strong>Publicar</strong>.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-txt">
+          Copia el link que aparece y pégalo arriba. El dashboard se conectará automáticamente y se actualizará cada vez que presiones <strong>Actualizar</strong>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOOLTIP -->
+<div class="tt" id="tt"></div>
+
+<script>
+// ── STATE ──
+let allRows=[], months=[], selMes='TODOS', byDay={};
+let sheetsUrl = localStorage.getItem('sheets_url') || '';
+
+const MONTH_NAMES=['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
+                   'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+
+// ── CLOCK ──
+(function tick(){
+  const n=new Date(),p=x=>String(x).padStart(2,'0');
+  document.getElementById('clk').textContent=`${p(n.getHours())}:${p(n.getMinutes())}`;
+  const D=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'],
+        M=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  document.getElementById('clk-d').textContent=`${D[n.getDay()]} ${n.getDate()} ${M[n.getMonth()]}`;
+  setTimeout(tick,1000);
+})();
+
+// ── AUTO-LOAD IF URL SAVED ──
+if(sheetsUrl){
+  document.getElementById('sheets-url').value=sheetsUrl;
+  loadData();
+}
+
+// ── CONNECT ──
+function connectSheets(){
+  const raw=document.getElementById('sheets-url').value.trim();
+  if(!raw){ alert('Pega el link de Google Sheets primero.'); return; }
+
+  // Accept both the sharing URL and the export URL
+  // Convert sharing URL to CSV export URL if needed
+  let url = raw;
+  // If it's a standard sheets URL, convert to export
+  const match = raw.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  if(match && !raw.includes('pub?')){
+    const id = match[1];
+    // Try to extract gid
+    const gidMatch = raw.match(/gid=(\d+)/);
+    const gid = gidMatch ? gidMatch[1] : '0';
+    url = `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
+  }
+
+  sheetsUrl = url;
+  localStorage.setItem('sheets_url', url);
+  loadData();
+}
+
+// ── LOAD DATA ──
+async function loadData(){
+  if(!sheetsUrl){
+    setStatus('err','Sin URL configurada. Ingresa el link de Google Sheets abajo.');
+    return;
+  }
+
+  setStatus('loading','Cargando datos desde Google Sheets…');
+  const btn=document.getElementById('btn-refresh');
+  btn.classList.add('spinning');
+
+  try{
+    // Use CORS proxy approach — fetch CSV directly
+    const res = await fetch(sheetsUrl);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const csv = await res.text();
+    parseCSV(csv);
+    const now=new Date();
+    const p=x=>String(x).padStart(2,'0');
+    document.getElementById('last-update').textContent=
+      `Última actualización: ${p(now.getHours())}:${p(now.getMinutes())}:${p(now.getSeconds())}`;
+    setStatus('ok',`<strong>${allRows.length.toLocaleString()} órdenes</strong> cargadas desde Google Sheets`);
+  } catch(e){
+    setStatus('err','Error al cargar datos. Verifica que el link sea correcto y la hoja esté publicada.');
+    console.error(e);
+  }
+
+  btn.classList.remove('spinning');
+}
+
+// ── PARSE CSV ──
+function parseCSV(csv){
+  const lines=csv.split('\n').filter(l=>l.trim());
+  if(!lines.length) return;
+
+  // Parse header
+  const headers=parseCSVLine(lines[0]);
+
+  // Find column indices
+  const idx={};
+  headers.forEach((h,i)=>{
+    const clean=h.trim().replace(/^"|"$/g,'');
+    idx[clean]=i;
+  });
+
+  const vigCol   = findCol(idx,['Vigencia']);
+  const estCol   = findCol(idx,['Estado facturación','Estado facturacion']);
+  const fechaCol = findCol(idx,['Fecha de creación','Fecha de creacion']);
+  const anulCol  = findCol(idx,['Fecha de anulación','Fecha de anulacion']);
+
+  allRows=[];
+  for(let i=1;i<lines.length;i++){
+    const cols=parseCSVLine(lines[i]);
+    if(cols.length<3) continue;
+    allRows.push({
+      vigencia:   (cols[vigCol]||'').trim().replace(/^"|"$/g,''),
+      estado:     (cols[estCol]||'').trim().replace(/^"|"$/g,''),
+      fecha:      (cols[fechaCol]||'').trim().replace(/^"|"$/g,''),
+      fechaAnul:  anulCol>=0?(cols[anulCol]||'').trim().replace(/^"|"$/g,''):'',
+    });
+  }
+
+  buildMonths();
+  selMes='TODOS';
+  buildMesButtons();
+  renderAll();
+  buildNSData();
+  nsPreset(0);
+}
+
+function findCol(idx, names){
+  for(const n of names){ if(idx[n]!==undefined) return idx[n]; }
+  return 0;
+}
+
+function parseCSVLine(line){
+  const cols=[];
+  let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){ inQ=!inQ; }
+    else if(c===','&&!inQ){ cols.push(cur);cur=''; }
+    else cur+=c;
+  }
+  cols.push(cur);
+  return cols;
+}
+
+// ── MONTH / DATE HELPERS ──
+function getRowDate(r){
+  if(!r.fecha) return null;
+  const d=new Date(r.fecha);
+  return isNaN(d)?null:d;
+}
+
+function getRowMonthName(r){
+  const d=getRowDate(r);
+  return d?MONTH_NAMES[d.getMonth()]:null;
+}
+
+function getRowDateKey(r){
+  const d=getRowDate(r);
+  if(!d) return null;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function buildMonths(){
+  const mSet=new Set();
+  allRows.forEach(r=>{const m=getRowMonthName(r);if(m)mSet.add(m);});
+  months=[...mSet].sort((a,b)=>MONTH_NAMES.indexOf(a)-MONTH_NAMES.indexOf(b));
+}
+
+function buildMesButtons(){
+  const bar=document.getElementById('mes-bar');
+  Array.from(bar.querySelectorAll('.mes-btn:not(.all)')).forEach(b=>b.remove());
+  months.forEach(m=>{
+    const btn=document.createElement('button');
+    btn.className='mes-btn';
+    btn.textContent=m;
+    btn.onclick=()=>setMes(m);
+    bar.appendChild(btn);
+  });
+  document.querySelector('.mes-btn.all').classList.add('active');
+}
+
+function setMes(m){
+  selMes=m;
+  document.querySelectorAll('.mes-btn').forEach(b=>{
+    b.classList.remove('active');
+    if(b.textContent===m||(m==='TODOS'&&b.classList.contains('all'))) b.classList.add('active');
+  });
+  renderAll();
+}
+
+// ── CLASSIFY ──
+function classify(rows){
+  let conf=0,vig=0,anul=0;
+  const byDayLocal={};
+  rows.forEach(r=>{
+    const v=r.vigencia, e=r.estado;
+    let cat='';
+    if(v==='Vigente'&&e==='Pendiente')      { cat='vig';  vig++;  }
+    else if(v==='Anulada'&&e==='Remisionada'){ cat='conf'; conf++; }
+    else if(v==='Anulada'&&e==='Pendiente') { cat='anul'; anul++; }
+    const dk=getRowDateKey(r);
+    if(dk&&cat){
+      if(!byDayLocal[dk]) byDayLocal[dk]={conf:0,vig:0,anul:0};
+      byDayLocal[dk][cat]++;
+    }
+  });
+  return {conf,vig,anul,byDayLocal};
+}
+
+function getFiltered(){
+  if(selMes==='TODOS') return allRows;
+  return allRows.filter(r=>getRowMonthName(r)===selMes);
+}
+
+// ── RENDER ALL ──
+function renderAll(){
+  const rows=getFiltered();
+  const {conf,vig,anul,byDayLocal}=classify(rows);
+  byDay=byDayLocal;
+  const total=conf+vig+anul;
+  const meta=Math.ceil(total*0.87);
+  const faltan=Math.max(0,meta-conf);
+  const pct=meta>0?Math.min(100,Math.round(conf/meta*100)):0;
+  const tasa=total>0?Math.round(conf/total*100):0;
+
+  // KPIs
+  document.getElementById('k-total').textContent=total.toLocaleString();
+  document.getElementById('k-conf').textContent=conf.toLocaleString();
+  document.getElementById('k-vig').textContent=vig.toLocaleString();
+  document.getElementById('k-anul').textContent=anul.toLocaleString();
+  document.getElementById('k-tasa').textContent=tasa+'%';
+  document.getElementById('k-total-sub').textContent=`${rows.length.toLocaleString()} órdenes · ${selMes==='TODOS'?'todos los meses':selMes}`;
+  document.getElementById('k-conf-s').textContent=total>0?`${Math.round(conf/total*100)}% del total`:'—';
+  document.getElementById('k-vig-s').textContent=total>0?`${Math.round(vig/total*100)}% del total`:'—';
+  document.getElementById('k-anul-s').textContent=total>0?`${Math.round(anul/total*100)}% del total`:'—';
+
+  // Progress
+  document.getElementById('p-cur').textContent=conf.toLocaleString();
+  document.getElementById('p-tot').textContent=meta.toLocaleString();
+  document.getElementById('p-pct').textContent=pct+'%';
+  document.getElementById('t-fill').style.width=pct+'%';
+  document.getElementById('t-mid').textContent=`Meta 87% = ${meta.toLocaleString()}`;
+  document.getElementById('t-tot').textContent=total.toLocaleString();
+
+  renderAlert(conf,meta,faltan,pct,total);
+  renderChart();
+  renderTable();
+
+  const scope=selMes==='TODOS'?'todos los meses':selMes;
+  document.getElementById('chart-title').textContent=`Órdenes por día — ${scope}`;
+  document.getElementById('tbl-title').textContent=`Detalle por día — ${scope}`;
+}
+
+function renderAlert(conf,meta,faltan,pct,total){
+  const el=document.getElementById('alert');
+  const ico=document.getElementById('a-ico');
+  const main=document.getElementById('a-main');
+  const sub=document.getElementById('a-sub');
+  const num=document.getElementById('a-num');
+  const lbl=document.getElementById('a-lbl');
+  el.className='alert';
+  if(total===0){
+    el.classList.add('idle'); ico.textContent='📡';
+    main.textContent='Sin datos para el filtro seleccionado';
+    sub.textContent='Selecciona otro mes o revisa la conexión'; num.textContent='—'; lbl.textContent='FALTAN'; return;
+  }
+  if(conf>=meta){
+    el.classList.add('done'); ico.textContent='🎯';
+    main.textContent='¡META ALCANZADA! Excelente trabajo del equipo';
+    sub.textContent=`${conf.toLocaleString()} confirmadas · ${pct}% de la meta cubierta`;
+    num.textContent='✓'; lbl.textContent='COMPLETADO';
+  } else if(faltan<=Math.ceil(meta*0.05)){
+    el.classList.add('ok'); ico.textContent='🟢';
+    main.textContent=`Casi en meta — faltan solo ${faltan.toLocaleString()} confirmaciones`;
+    sub.textContent=`${pct}% cubierto · ${conf.toLocaleString()} de ${meta.toLocaleString()} requeridas`;
+    num.textContent=faltan; lbl.textContent='FALTAN';
+  } else if(pct>=60){
+    el.classList.add('warn'); ico.textContent='🟡';
+    main.textContent=`Faltan ${faltan.toLocaleString()} confirmaciones para llegar al 87%`;
+    sub.textContent=`Van ${conf.toLocaleString()} de ${meta.toLocaleString()} · ${pct}% completado`;
+    num.textContent=faltan; lbl.textContent='FALTAN';
+  } else {
+    el.classList.add('bad'); ico.textContent='🔴';
+    main.textContent=`¡Atención! Faltan ${faltan.toLocaleString()} confirmaciones — ritmo bajo`;
+    sub.textContent=`Solo ${pct}% cubierto · Se requieren ${meta.toLocaleString()} confirmaciones`;
+    num.textContent=faltan; lbl.textContent='FALTAN';
+  }
+}
+
+function renderChart(){
+  const wrap=document.getElementById('chart-wrap');
+  const dates=Object.keys(byDay).sort();
+  if(!dates.length){
+    wrap.innerHTML='<div class="chart-empty" style="width:100%;"><div class="chart-empty-ico">📊</div><div>Sin datos para mostrar</div></div>';
+    return;
+  }
+  let maxV=0;
+  dates.forEach(d=>{const t=byDay[d].conf+byDay[d].vig+byDay[d].anul;if(t>maxV)maxV=t;});
+  const niceMax=Math.ceil(maxV/50)*50||1;
+  const steps=5, H=270;
+  const todayISO=(()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})();
+
+  let yHtml='<div class="y-ax">';
+  for(let i=steps;i>=0;i--) yHtml+=`<div class="y-lbl">${Math.round(niceMax*i/steps).toLocaleString()}</div>`;
+  yHtml+='</div>';
+
+  let gHtml='<div class="glines">';
+  for(let i=0;i<=steps;i++) gHtml+='<div class="gl"></div>';
+  gHtml+='</div>';
+
+  let barsHtml='';
+  dates.forEach(iso=>{
+    const d=byDay[iso];
+    const total=d.conf+d.vig+d.anul;
+    const totalH=total>0?Math.round((total/niceMax)*(H-20)):0;
+    const confH=total>0?Math.round(d.conf/total*totalH):0;
+    const vigH=total>0?Math.round(d.vig/total*totalH):0;
+    const anulH=Math.max(0,totalH-confH-vigH);
+    const [,m,day]=iso.split('-');
+    const pct=total>0?Math.round(d.conf/total*100):0;
+    const isT=iso===todayISO;
+    barsHtml+=`<div class="bar-col${isT?' today':''}"
+      data-iso="${iso}" data-conf="${d.conf}" data-vig="${d.vig}" data-anul="${d.anul}" data-total="${total}" data-pct="${pct}"
+      onmouseenter="showTT(event,this)" onmouseleave="hideTT()">
+      <div class="bstack" style="height:${totalH}px">
+        ${confH>0?`<div class="bseg g" style="height:${confH}px"></div>`:''}
+        ${anulH>0?`<div class="bseg r" style="height:${anulH}px"></div>`:''}
+        ${vigH>0?`<div class="bseg y" style="height:${vigH}px"></div>`:''}
+        ${totalH===0?'<div style="height:2px;background:var(--dim);width:100%;"></div>':''}
+      </div>
+      <div class="x-lbl">${parseInt(day)}/${parseInt(m)}</div>
+    </div>`;
+  });
+
+  wrap.innerHTML=`${yHtml}<div class="bars-outer"><div class="bars-cont" style="height:${H}px">${gHtml}${barsHtml}</div></div>`;
+}
+
+function renderTable(){
+  const dates=Object.keys(byDay).sort().reverse();
+  const tbody=document.getElementById('tbl-body');
+  if(!dates.length){
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted);">Sin registros</td></tr>'; return;
+  }
+  const M=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  tbody.innerHTML=dates.map(iso=>{
+    const d=byDay[iso];
+    const total=d.conf+d.vig+d.anul;
+    const meta87=Math.ceil(total*0.87);
+    const faltan=Math.max(0,meta87-d.conf);
+    const pct=total>0?Math.round(d.conf/total*100):0;
+    const cls=pct>=87?'good':pct>=60?'warn':'bad';
+    const fc=faltan===0?'var(--green)':faltan<=Math.ceil(meta87*0.1)?'var(--yellow)':'var(--red)';
+    const [y,m,day]=iso.split('-');
+    return `<tr>
+      <td>${parseInt(day)} ${M[parseInt(m)-1]} ${y}</td>
+      <td>${total.toLocaleString()}</td>
+      <td class="gv">${d.conf.toLocaleString()}</td>
+      <td class="yv">${d.vig.toLocaleString()}</td>
+      <td class="rv">${d.anul.toLocaleString()}</td>
+      <td><span class="badge ${cls}">${pct}%</span></td>
+      <td style="color:${fc};font-weight:600;">${faltan===0?'✓ Meta':faltan.toLocaleString()}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── STATUS ──
+function setStatus(type, msg){
+  const dot=document.getElementById('s-dot');
+  const txt=document.getElementById('s-txt');
+  dot.className='status-dot '+type;
+  txt.innerHTML=msg;
+}
+
+// ── TOOLTIP ──
+const tt=document.getElementById('tt');
+function showTT(e,el){
+  const iso=el.dataset.iso,conf=+el.dataset.conf,vig=+el.dataset.vig,
+        anul=+el.dataset.anul,total=+el.dataset.total,pct=+el.dataset.pct;
+  const meta87=Math.ceil(total*0.87);
+  const faltan=Math.max(0,meta87-conf);
+  const M=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const [y,m,d]=iso.split('-');
+  const color=pct>=87?'var(--green)':pct>=60?'var(--yellow)':'var(--red)';
+  const fc=faltan===0?'var(--green)':faltan<=Math.ceil(meta87*0.1)?'var(--yellow)':'var(--red)';
+  tt.innerHTML=`
+    <div class="tt-date">${parseInt(d)} ${M[parseInt(m)-1]} ${y}</div>
+    <div class="tt-row"><span class="tt-lbl"><div class="tt-d" style="background:var(--green)"></div>Confirmadas</span><span class="tt-v" style="color:var(--green)">${conf.toLocaleString()}</span></div>
+    <div class="tt-row"><span class="tt-lbl"><div class="tt-d" style="background:var(--yellow)"></div>Vigentes</span><span class="tt-v" style="color:var(--yellow)">${vig.toLocaleString()}</span></div>
+    <div class="tt-row"><span class="tt-lbl"><div class="tt-d" style="background:var(--red)"></div>Anuladas</span><span class="tt-v" style="color:var(--red)">${anul.toLocaleString()}</span></div>
+    <div class="tt-sep"></div>
+    <div class="tt-tot"><span style="color:var(--muted)">Total</span><span style="color:var(--text);font-weight:600">${total.toLocaleString()}</span></div>
+    <div class="tt-pct" style="color:${color}">${pct}% confirmadas</div>
+    <div class="tt-pct" style="color:${fc};margin-top:3px;">Faltan: ${faltan===0?'✓ Meta cumplida':faltan.toLocaleString()+' para 87%'}</div>`;
+  tt.classList.add('vis');
+  moveTT(e);
+}
+function moveTT(e){
+  let x=e.clientX+16,y=e.clientY-10;
+  if(x+200>window.innerWidth) x=e.clientX-210;
+  if(y+180>window.innerHeight) y=e.clientY-190;
+  tt.style.left=x+'px'; tt.style.top=y+'px';
+}
+function hideTT(){tt.classList.remove('vis');}
+document.addEventListener('mousemove',e=>{if(tt.classList.contains('vis'))moveTT(e);});
+
+
+// ── TABS ──
+function switchTab(name, btn){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── NIVEL DE SERVICIO ──
+let byAnulDate = {};
+
+function buildNSData(){
+  byAnulDate = {};
+  allRows.forEach(r=>{
+    const fa = r.fechaAnul;
+    if(!fa) return;
+    // Parse fecha de anulación to ISO date key
+    const d = new Date(fa);
+    if(isNaN(d)) return;
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const v=r.vigencia, e=r.estado;
+    let cat='';
+    if(v==='Anulada'&&e==='Remisionada') cat='conf';
+    else if(v==='Anulada'&&e==='Pendiente') cat='anul';
+    if(!cat) return;
+    if(!byAnulDate[key]) byAnulDate[key]={conf:0,anul:0};
+    byAnulDate[key][cat]++;
+  });
+}
+
+function nsPreset(days){
+  const allDates=Object.keys(byAnulDate).sort();
+  if(!allDates.length) return;
+  if(days===0){
+    document.getElementById('ns-desde').value=allDates[0];
+    document.getElementById('ns-hasta').value=allDates[allDates.length-1];
+  } else {
+    const now=new Date(), from=new Date(now);
+    from.setDate(from.getDate()-(days-1));
+    const p=x=>String(x).padStart(2,'0');
+    document.getElementById('ns-desde').value=`${from.getFullYear()}-${p(from.getMonth()+1)}-${p(from.getDate())}`;
+    document.getElementById('ns-hasta').value=`${now.getFullYear()}-${p(now.getMonth()+1)}-${p(now.getDate())}`;
+  }
+  renderNS();
+}
+
+function renderNS(){
+  const desde=document.getElementById('ns-desde').value;
+  const hasta=document.getElementById('ns-hasta').value;
+  let dates=Object.keys(byAnulDate).sort();
+  if(desde) dates=dates.filter(d=>d>=desde);
+  if(hasta) dates=dates.filter(d=>d<=hasta);
+
+  const empty = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted);">Sin datos en el rango seleccionado</td></tr>';
+
+  if(!dates.length){
+    ['ns-conf','ns-anul','ns-prom','ns-best'].forEach(id=>document.getElementById(id).textContent='—');
+    document.getElementById('ns-best-s').textContent='—';
+    document.getElementById('ns-chart-wrap').innerHTML='<div class="chart-empty" style="width:100%;"><div class="chart-empty-ico">📈</div><div>Sin datos en el rango</div></div>';
+    document.getElementById('ns-tbl-body').innerHTML=empty;
+    return;
+  }
+
+  // Totals
+  let totConf=0,totAnul=0,bestDay='',bestVal=0;
+  dates.forEach(d=>{
+    totConf+=byAnulDate[d].conf;
+    totAnul+=byAnulDate[d].anul;
+    if(byAnulDate[d].conf>bestVal){bestVal=byAnulDate[d].conf;bestDay=d;}
+  });
+
+  document.getElementById('ns-conf').textContent=totConf.toLocaleString();
+  document.getElementById('ns-anul').textContent=totAnul.toLocaleString();
+  document.getElementById('ns-prom').textContent=Math.round(totConf/dates.length).toLocaleString();
+  document.getElementById('ns-best').textContent=bestVal.toLocaleString();
+  if(bestDay){
+    const M=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const [y,m,d]=bestDay.split('-');
+    document.getElementById('ns-best-s').textContent=`${parseInt(d)} ${M[parseInt(m)-1]} ${y}`;
+  }
+
+  // Chart
+  const wrap=document.getElementById('ns-chart-wrap');
+  let maxV=0;
+  dates.forEach(d=>{if(byAnulDate[d].conf>maxV)maxV=byAnulDate[d].conf;});
+  const nM=Math.ceil(maxV/50)*50||1, steps=5, H=270;
+  const todayISO=(()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})();
+
+  let yHtml='<div class="y-ax">';
+  for(let i=steps;i>=0;i--) yHtml+=`<div class="y-lbl">${Math.round(nM*i/steps).toLocaleString()}</div>`;
+  yHtml+='</div>';
+  let gHtml='<div class="glines">';
+  for(let i=0;i<=steps;i++) gHtml+='<div class="gl"></div>';
+  gHtml+='</div>';
+
+  let bHtml='';
+  dates.forEach(iso=>{
+    const d=byAnulDate[iso];
+    const cH=Math.round((d.conf/nM)*(H-20));
+    const aH=Math.round((d.anul/nM)*(H-20));
+    const [,m,day]=iso.split('-');
+    const isBest=iso===bestDay;
+    const isToday=iso===todayISO;
+    bHtml+=`<div class="bar-col${isToday?' today':''}">
+      <div class="ns-bar-wrap" style="height:${H-20}px;align-items:flex-end;">
+        <div class="ns-bar g" style="height:${cH}px"></div>
+        <div class="ns-bar r" style="height:${aH}px"></div>
+      </div>
+      <div class="x-lbl" style="${isBest?'color:var(--green)':''}">${parseInt(day)}/${parseInt(m)}${isBest?' ★':''}</div>
+    </div>`;
+  });
+
+  wrap.innerHTML=`<div class="chart-wrap">${yHtml}<div class="bars-outer"><div class="bars-cont" style="height:${H}px">${gHtml}${bHtml}</div></div></div>`;
+
+  // Table
+  const M=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  document.getElementById('ns-tbl-body').innerHTML=[...dates].reverse().map(iso=>{
+    const d=byAnulDate[iso];
+    const tot=d.conf+d.anul;
+    const pct=tot>0?Math.round(d.conf/tot*100):0;
+    const cls=pct>=87?'good':pct>=60?'warn':'bad';
+    const [y,m,day]=iso.split('-');
+    const isBest=iso===bestDay;
+    return `<tr${isBest?' style="background:rgba(34,217,122,.04)"':''}>
+      <td>${parseInt(day)} ${M[parseInt(m)-1]} ${y}${isBest?' <span style="font-size:.58rem;color:var(--green);margin-left:4px;">★ MEJOR</span>':''}</td>
+      <td class="gv">${d.conf.toLocaleString()}</td>
+      <td class="rv">${d.anul.toLocaleString()}</td>
+      <td>${tot.toLocaleString()}</td>
+      <td><span class="badge ${cls}">${pct}%</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── AUTO REFRESH cada 5 minutos ──
+setInterval(()=>{ if(sheetsUrl) loadData(); }, 5*60*1000);
+</script>
+</body>
+</html>
